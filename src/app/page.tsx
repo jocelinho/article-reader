@@ -2,65 +2,62 @@
 
 import { useState } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { compressArticle } from "@/lib/compression";
-import type { ArticleData } from "@/types/article";
-
-const sampleArticle: ArticleData = {
-  t: "The Art of Reading",
-  c: `# The Art of Reading
-
-Reading is one of the most profound activities a human can engage in. It allows us to transcend time and space, to experience lives we could never live, and to think thoughts that originated in minds far removed from our own.
-
-## Why We Read
-
-There are many reasons why people read:
-
-1. **For knowledge** - Books are repositories of human wisdom
-2. **For pleasure** - Stories transport us to other worlds
-3. **For connection** - Reading helps us understand others
-4. **For growth** - Every book changes us in some way
-
-> "A reader lives a thousand lives before he dies. The man who never reads lives only one." — George R.R. Martin
-
-## The Digital Age
-
-In our digital age, reading has transformed. We now have access to more text than ever before, yet our attention spans seem to shrink. This paradox defines our relationship with written content.
-
-### Finding Balance
-
-The key is to find balance between:
-
-- Quick, digestible content for staying informed
-- Deep, long-form reading for true understanding
-
-## Conclusion
-
-Whether you're reading a novel, a technical manual, or an article like this one, remember that each word was carefully chosen to convey meaning. Take your time, savor the prose, and let the ideas sink in.
-
----
-
-*Happy reading!*`,
-  m: {
-    author: "Article Reader Team",
-    date: new Date().toISOString(),
-    lang: "en",
-  },
-};
 
 export default function Home() {
-  const [copied, setCopied] = useState(false);
+  const [testResult, setTestResult] = useState<{
+    id: string;
+    url: string;
+  } | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const generateSampleUrl = () => {
-    const compressed = compressArticle(sampleArticle);
-    const url = `${window.location.origin}/read#${compressed}`;
-    navigator.clipboard.writeText(url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  const createTestArticle = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/article", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          source_type: "url",
+          source_url: "https://example.com/article",
+          raw_content: `# The Future of Reading
 
-  const openSampleArticle = () => {
-    const compressed = compressArticle(sampleArticle);
-    window.open(`/read#${compressed}`, "_blank");
+Reading has always been fundamental to human knowledge and culture. As we move into the digital age, the way we consume written content continues to evolve.
+
+## Digital Transformation
+
+Modern reading experiences combine the best of traditional print with the advantages of digital technology. We can now:
+
+- Access millions of articles instantly
+- Enjoy personalized reading experiences
+- Share content seamlessly across platforms
+
+## AI Enhancement
+
+Artificial intelligence is revolutionizing how we interact with written content. AI can now:
+
+1. **Summarize** long articles into key points
+2. **Enhance** content with better structure and formatting
+3. **Translate** content across languages
+4. **Recommend** related reading materials
+
+## The Reading Experience
+
+The goal is to make reading more accessible, enjoyable, and enriching. By combining beautiful design with smart technology, we create experiences that honor both the content and the reader.
+
+> "Reading is to the mind what exercise is to the body." — Joseph Addison
+
+Whether you're reading news, literature, or technical documentation, the medium should never get in the way of the message.`,
+          title: "The Future of Reading",
+        }),
+      });
+
+      const data = await response.json();
+      setTestResult({ id: data.id, url: data.url });
+    } catch (error) {
+      console.error("Failed to create test article:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -75,8 +72,8 @@ export default function Home() {
             Article Reader
           </h1>
           <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-md mx-auto">
-            A beautiful, distraction-free reading experience for articles shared
-            via URL encoding.
+            AI-enhanced article reading with intelligent summarization and
+            beautiful formatting.
           </p>
         </header>
 
@@ -86,15 +83,14 @@ export default function Home() {
           </h2>
           <div className="space-y-4 text-zinc-600 dark:text-zinc-400">
             <p>
-              Article Reader uses URL hash encoding to store article content
-              directly in the URL. No database, no server storage — just a clean
-              link that contains everything.
+              Article Reader uses AI to transform raw content into beautifully
+              formatted, easy-to-read articles with smart features.
             </p>
             <ol className="list-decimal list-inside space-y-2 ml-2">
-              <li>AI agents compress article content using LZ-String</li>
-              <li>The compressed content is encoded in the URL hash</li>
-              <li>Share the URL — it contains the full article</li>
-              <li>Recipients see a beautifully formatted reading experience</li>
+              <li>Submit article content via the API</li>
+              <li>AI generates title, summary, and enhanced formatting</li>
+              <li>Content is cached in the database with deterministic IDs</li>
+              <li>Share the URL — recipients see a beautifully formatted article</li>
             </ol>
           </div>
         </section>
@@ -105,19 +101,26 @@ export default function Home() {
           </h2>
           <div className="bg-zinc-50 dark:bg-zinc-900 rounded-lg p-4 overflow-x-auto">
             <pre className="text-sm text-zinc-700 dark:text-zinc-300">
-              <code>{`import LZString from "lz-string";
+              <code>{`// Create or retrieve an article
+const response = await fetch(\`\${baseUrl}/api/article\`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    source_type: "url",
+    source_url: "https://example.com/article",
+    raw_content: "Article content in markdown...",
+    title: "Optional Title"
+  })
+});
 
-const article = {
-  t: "Article Title",
-  c: "# Markdown content...",
-  m: { lang: "en", author: "Name" }
-};
+const article = await response.json();
+// article.url contains the shareable link
+// e.g., /article?id=abc123...
 
-const url = \`\${baseUrl}/read#\${
-  LZString.compressToEncodedURIComponent(
-    JSON.stringify(article)
-  )
-}\`;`}</code>
+// Retrieve existing article
+const cached = await fetch(
+  \`\${baseUrl}/api/article/\${articleId}\`
+);`}</code>
             </pre>
           </div>
         </section>
@@ -126,19 +129,33 @@ const url = \`\${baseUrl}/read#\${
           <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
             Try It
           </h2>
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col gap-3">
             <button
-              onClick={openSampleArticle}
-              className="flex-1 px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
+              onClick={createTestArticle}
+              disabled={loading}
+              className="px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-blue-300 transition-colors font-medium"
             >
-              View Sample Article
+              {loading ? "Creating..." : "Create Test Article"}
             </button>
-            <button
-              onClick={generateSampleUrl}
-              className="flex-1 px-4 py-3 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors font-medium"
-            >
-              {copied ? "Copied!" : "Copy Sample URL"}
-            </button>
+
+            {testResult && (
+              <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-lg">
+                <p className="text-sm text-green-900 dark:text-green-100 font-medium mb-2">
+                  ✓ Article Created!
+                </p>
+                <p className="text-xs text-green-700 dark:text-green-300 mb-2 font-mono break-all">
+                  ID: {testResult.id}
+                </p>
+                <a
+                  href={testResult.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded text-sm transition-colors"
+                >
+                  View Article →
+                </a>
+              </div>
+            )}
           </div>
         </section>
 
@@ -148,12 +165,14 @@ const url = \`\${baseUrl}/read#\${
           </h2>
           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
+              { icon: "🤖", text: "AI-generated summaries" },
+              { icon: "✨", text: "Enhanced formatting" },
               { icon: "🌙", text: "Dark/Light mode" },
               { icon: "📱", text: "Mobile-friendly" },
               { icon: "🔤", text: "Bilingual typography" },
               { icon: "📊", text: "Reading progress" },
-              { icon: "🔗", text: "No database needed" },
-              { icon: "⚡", text: "Instant loading" },
+              { icon: "💾", text: "Deterministic caching" },
+              { icon: "⚡", text: "Instant retrieval" },
             ].map((feature) => (
               <li
                 key={feature.text}
@@ -170,7 +189,7 @@ const url = \`\${baseUrl}/read#\${
       </main>
 
       <footer className="border-t border-zinc-200 dark:border-zinc-800 py-8 text-center text-sm text-zinc-500 dark:text-zinc-400">
-        Built for seamless AI-to-human content sharing
+        AI-enhanced reading experience powered by Claude
       </footer>
     </div>
   );

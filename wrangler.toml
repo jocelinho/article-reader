@@ -1,0 +1,11 @@
+name = "article-reader"
+compatibility_date = "2024-01-01"
+pages_build_output_dir = "out"
+
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "article-reader-db"
+database_id = "686d8e26-ad14-47a1-b4ad-9710fe360d48"
+
+# Local development uses --local flag with wrangler dev
