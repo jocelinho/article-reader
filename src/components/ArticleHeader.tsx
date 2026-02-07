@@ -1,5 +1,5 @@
 import type { ArticleMetadata } from "@/types/article";
-import { formatDate } from "@/lib/utils";
+import { formatDate, extractDomain } from "@/lib/utils";
 
 interface ArticleHeaderProps {
   title: string;
@@ -14,12 +14,15 @@ export function ArticleHeader({
 }: ArticleHeaderProps) {
   return (
     <header className="mb-8 pb-8 border-b border-zinc-200 dark:border-zinc-800">
+      {/* Title */}
       <h1 className="text-3xl sm:text-4xl font-bold text-zinc-900 dark:text-zinc-100 leading-tight mb-4">
         {title}
       </h1>
+
+      {/* Metadata row */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-zinc-500 dark:text-zinc-400">
         {metadata?.author && (
-          <span className="flex items-center gap-1">
+          <span className="flex items-center gap-1.5">
             <svg
               className="w-4 h-4"
               fill="none"
@@ -33,11 +36,11 @@ export function ArticleHeader({
                 d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
               />
             </svg>
-            {metadata.author}
+            <span className="font-medium">{metadata.author}</span>
           </span>
         )}
         {metadata?.date && (
-          <span className="flex items-center gap-1">
+          <span className="flex items-center gap-1.5">
             <svg
               className="w-4 h-4"
               fill="none"
@@ -54,7 +57,7 @@ export function ArticleHeader({
             {formatDate(metadata.date)}
           </span>
         )}
-        <span className="flex items-center gap-1">
+        <span className="flex items-center gap-1.5">
           <svg
             className="w-4 h-4"
             fill="none"
@@ -75,10 +78,11 @@ export function ArticleHeader({
             href={metadata.source}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1 hover:text-blue-500 transition-colors"
+            className="flex items-center gap-1 text-zinc-500 dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
           >
+            <span>Source: {extractDomain(metadata.source)}</span>
             <svg
-              className="w-4 h-4"
+              className="w-3.5 h-3.5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -90,7 +94,6 @@ export function ArticleHeader({
                 d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
               />
             </svg>
-            Source
           </a>
         )}
       </div>

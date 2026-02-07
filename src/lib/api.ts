@@ -22,6 +22,8 @@ export interface ArticleResponse {
   status: string;
   created_at: string;
   url: string;
+  source_url?: string;
+  author?: string;
 }
 
 export interface ApiError {

@@ -32,6 +32,8 @@ interface ArticleResponse {
   status: string;
   created_at: string;
   url: string;
+  source_url?: string;
+  author?: string;
 }
 
 function formatArticleResponse(article: DBArticle, baseUrl: string): ArticleResponse {
@@ -45,7 +47,8 @@ function formatArticleResponse(article: DBArticle, baseUrl: string): ArticleResp
     reading_time: article.reading_time || 1,
     status: article.status,
     created_at: article.created_at,
-    url: `${baseUrl}/read/${article.id}`,
+    url: `${baseUrl}/article?id=${article.id}`,
+    source_url: article.source_url || undefined,
   };
 }
 

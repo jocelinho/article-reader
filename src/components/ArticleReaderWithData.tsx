@@ -40,7 +40,7 @@ export function ArticleReaderWithData({ article }: ArticleReaderWithDataProps) {
           <ThemeToggle />
         </div>
         <main
-          className={`max-w-[65ch] mx-auto px-4 sm:px-6 py-12 sm:py-16 ${
+          className={`max-w-[75ch] lg:max-w-3xl mx-auto px-6 sm:px-8 py-12 sm:py-16 ${
             isChinese ? "lang-zh" : ""
           }`}
           lang={article.language || (isChinese ? "zh-TW" : "en")}
@@ -49,11 +49,17 @@ export function ArticleReaderWithData({ article }: ArticleReaderWithDataProps) {
             title={article.title}
             metadata={{
               lang: article.language,
+              source: article.source_url,
+              author: article.author,
             }}
             readingTime={article.reading_time}
           />
           {article.ai_summary && <SummaryBox summary={article.ai_summary} />}
-          <ArticleContent content={displayContent} isChinese={isChinese} />
+          <ArticleContent
+            content={displayContent}
+            isChinese={isChinese}
+            isOriginal={contentMode === "original"}
+          />
         </main>
       </div>
     </>

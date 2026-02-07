@@ -33,6 +33,8 @@ interface ArticleResponse {
   status: string;
   created_at: string;
   url: string;
+  source_url?: string;
+  author?: string;
 }
 
 interface DBArticle {
@@ -251,6 +253,7 @@ function formatArticleResponse(article: DBArticle, baseUrl: string): ArticleResp
     status: article.status,
     created_at: article.created_at,
     url: `${baseUrl}/article?id=${article.id}`,
+    source_url: article.source_url || undefined,
   };
 }
 

@@ -42,3 +42,15 @@ export function formatDate(dateString: string): string {
     return dateString;
   }
 }
+
+/**
+ * Extract domain from URL for display
+ */
+export function extractDomain(url: string): string {
+  try {
+    const urlObj = new URL(url);
+    return urlObj.hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+}
