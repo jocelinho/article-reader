@@ -15,6 +15,7 @@ export interface ArticleResponse {
   id: string;
   title: string;
   ai_summary: string;
+  ai_summary_zh?: string;
   ai_enhanced_content: string;
   raw_content: string;
   language: string;
@@ -24,6 +25,8 @@ export interface ArticleResponse {
   url: string;
   source_url?: string;
   author?: string;
+  hn_score?: number;
+  hn_comments?: number;
 }
 
 export interface ApiError {

@@ -12,6 +12,7 @@ interface DBArticle {
   email_message_id: string | null;
   raw_content: string;
   ai_summary: string | null;
+  ai_summary_zh: string | null;
   ai_enhanced_content: string | null;
   title: string | null;
   author: string | null;
@@ -20,12 +21,15 @@ interface DBArticle {
   status: string;
   created_at: string;
   processed_at: string | null;
+  hn_score: number | null;
+  hn_comments: number | null;
 }
 
 interface ArticleResponse {
   id: string;
   title: string;
   ai_summary: string;
+  ai_summary_zh?: string;
   ai_enhanced_content: string;
   raw_content: string;
   language: string;
@@ -42,6 +46,7 @@ function formatArticleResponse(article: DBArticle, baseUrl: string): ArticleResp
     id: article.id,
     title: article.title || 'Untitled',
     ai_summary: article.ai_summary || '',
+    ai_summary_zh: article.ai_summary_zh || undefined,
     ai_enhanced_content: article.ai_enhanced_content || article.raw_content,
     raw_content: article.raw_content,
     language: article.language || 'en',
@@ -51,6 +56,8 @@ function formatArticleResponse(article: DBArticle, baseUrl: string): ArticleResp
     url: `${baseUrl}/article?id=${article.id}`,
     source_url: article.source_url || undefined,
     author: article.author || undefined,
+    hn_score: article.hn_score || undefined,
+    hn_comments: article.hn_comments || undefined,
   };
 }
 

@@ -20,12 +20,15 @@ interface CreateArticleRequest {
   email_message_id?: string;
   raw_content: string;
   title?: string;
+  hn_score?: number;
+  hn_comments?: number;
 }
 
 interface ArticleResponse {
   id: string;
   title: string;
   ai_summary: string;
+  ai_summary_zh?: string;
   ai_enhanced_content: string;
   raw_content: string;
   language: string;
@@ -35,6 +38,8 @@ interface ArticleResponse {
   url: string;
   source_url?: string;
   author?: string;
+  hn_score?: number;
+  hn_comments?: number;
 }
 
 interface DBArticle {
@@ -44,6 +49,7 @@ interface DBArticle {
   email_message_id: string | null;
   raw_content: string;
   ai_summary: string | null;
+  ai_summary_zh: string | null;
   ai_enhanced_content: string | null;
   title: string | null;
   author: string | null;
@@ -52,6 +58,8 @@ interface DBArticle {
   status: string;
   created_at: string;
   processed_at: string | null;
+  hn_score: number | null;
+  hn_comments: number | null;
 }
 
 /**
@@ -76,6 +84,7 @@ async function processWithAI(
   title: string;
   author: string | null;
   summary: string;
+  summaryZh: string | null;
   enhancedContent: string;
   language: string;
   readingTime: number;
@@ -98,13 +107,42 @@ SUMMARY: One paragraph (3-5 sentences) that captures:
 - Key insights or findings
 - Why it matters
 
-ENHANCED CONTENT: A condensed version (~50% length) that keeps the best parts:
+SUMMARY_ZH: Traditional Chinese (繁體中文) translation of the SUMMARY above
+- Use natural, fluent Traditional Chinese
+- Maintain the same meaning and tone
+- Keep it concise (3-5 sentences)
+
+ENHANCED CONTENT: An improved version (~70-80% of original length) that preserves depth:
 - Add section headers (## markdown) at natural topic breaks
-- Keep specific examples, interesting anecdotes, and key quotes
-- Preserve humor, personality, and the author's voice
-- Include important statistics, facts, and technical details
-- Remove redundancy, filler, and low-value content
-- Goal: readable version that captures WHY the article is interesting, not just WHAT it says
+- Keep ALL specific examples, data points, quotes, and technical details
+- Preserve humor, personality, and the author's voice completely
+- Include ALL important statistics, facts, names, and numbers
+- Keep the full narrative arc and context - don't summarize key sections
+- Only remove: repetitive phrasing, pure filler words, tangential asides
+- Goal: readable version that captures BOTH why it's interesting AND all the important details
+
+SEMANTIC HIGHLIGHTING: Use these markers thoughtfully and sparingly (max 2-3 per paragraph):
+
+DARK BLUE ==text== - Core concepts and key ideas only:
+- Main topics and central themes (e.g., ==artificial intelligence==, ==climate change==)
+- Important technical concepts (e.g., ==neural networks==, ==blockchain==)
+- Framework/paradigm names (e.g., ==Mixture of Experts==)
+
+MEDIUM BLUE ^^text^^ - Technical specifics and people:
+- Specific technologies, APIs, tools (e.g., ^^GPT-5^^, ^^TensorFlow^^, ^^React^^)
+- People names (e.g., ^^Sam Altman^^, ^^Sarah Chen^^)
+- Organizations and products (e.g., ^^OpenAI^^, ^^Google^^)
+
+SOFT PINK $$text$$ - Data points and emphasis:
+- Statistics and percentages (e.g., $$94.7%$$, $$47% improvement$$)
+- Significant numbers (e.g., $$1.8 trillion parameters$$)
+- Important quotes or critical statements
+
+Rules:
+- Use sparingly - only highlight truly important terms
+- Don't highlight common words or every technical term
+- Maximum 2-3 highlights per paragraph
+- Prioritize readability over decoration
 
 ${providedTitle ? `Provided title: ${providedTitle}\n\n` : ''}Content:
 ---
@@ -142,6 +180,7 @@ Please respond in the exact format shown above with TITLE:, AUTHOR:, SUMMARY:, a
       title: parsed.title,
       author: parsed.author,
       summary: parsed.summary,
+      summaryZh: parsed.summaryZh,
       enhancedContent: parsed.enhancedContent,
       language,
       readingTime,
@@ -161,6 +200,7 @@ function parseAIResponse(responseText: string): {
   title: string;
   author: string | null;
   summary: string;
+  summaryZh: string | null;
   enhancedContent: string;
 } {
   // Find TITLE section
@@ -176,10 +216,14 @@ function parseAIResponse(responseText: string): {
   }
 
   // Find SUMMARY section
-  const summaryMatch = responseText.match(/SUMMARY:\s*(.+?)(?=\n\nENHANCED CONTENT:|$)/s);
+  const summaryMatch = responseText.match(/SUMMARY:\s*(.+?)(?=\n\nSUMMARY_ZH:|ENHANCED CONTENT:|$)/s);
   const summary = summaryMatch
     ? summaryMatch[1].trim()
     : 'Summary not available.';
+
+  // Find SUMMARY_ZH section
+  const summaryZhMatch = responseText.match(/SUMMARY_ZH:\s*(.+?)(?=\n\nENHANCED CONTENT:|$)/s);
+  const summaryZh = summaryZhMatch ? summaryZhMatch[1].trim() : null;
 
   // Find ENHANCED CONTENT section
   const enhancedMatch = responseText.match(/ENHANCED CONTENT:\s*(.+)/s);
@@ -191,6 +235,7 @@ function parseAIResponse(responseText: string): {
     title,
     author,
     summary,
+    summaryZh,
     enhancedContent,
   };
 }
@@ -202,6 +247,7 @@ function processWithAIFallback(rawContent: string, providedTitle?: string): {
   title: string;
   author: string | null;
   summary: string;
+  summaryZh: string | null;
   enhancedContent: string;
   language: string;
   readingTime: number;
@@ -215,6 +261,9 @@ function processWithAIFallback(rawContent: string, providedTitle?: string): {
   // Generate simple summary (first 100 chars + ellipsis)
   const summaryText = rawContent.slice(0, 100).trim();
   const summary = `Summary of: ${summaryText}${rawContent.length > 100 ? '...' : ''}`;
+
+  // No Chinese translation in fallback
+  const summaryZh = null;
 
   // Use raw content as-is for enhanced content (placeholder)
   const enhancedContent = rawContent;
@@ -230,6 +279,7 @@ function processWithAIFallback(rawContent: string, providedTitle?: string): {
     title,
     author,
     summary,
+    summaryZh,
     enhancedContent,
     language,
     readingTime,
@@ -268,6 +318,7 @@ function formatArticleResponse(article: DBArticle, baseUrl: string): ArticleResp
     id: article.id,
     title: article.title || 'Untitled',
     ai_summary: article.ai_summary || '',
+    ai_summary_zh: article.ai_summary_zh || undefined,
     ai_enhanced_content: article.ai_enhanced_content || article.raw_content,
     raw_content: article.raw_content,
     language: article.language || 'en',
@@ -277,6 +328,8 @@ function formatArticleResponse(article: DBArticle, baseUrl: string): ArticleResp
     url: `${baseUrl}/article?id=${article.id}`,
     source_url: article.source_url || undefined,
     author: article.author || undefined,
+    hn_score: article.hn_score || undefined,
+    hn_comments: article.hn_comments || undefined,
   };
 }
 
@@ -331,18 +384,21 @@ async function handlePost(request: Request, env: Env): Promise<Response> {
       // Update existing record
       await env.DB.prepare(`
         UPDATE articles
-        SET title = ?, author = ?, ai_summary = ?, ai_enhanced_content = ?,
-            language = ?, reading_time = ?, status = ?, processed_at = ?
+        SET title = ?, author = ?, ai_summary = ?, ai_summary_zh = ?, ai_enhanced_content = ?,
+            language = ?, reading_time = ?, status = ?, processed_at = ?, hn_score = ?, hn_comments = ?
         WHERE id = ?
       `).bind(
         processed.title,
         processed.author,
         processed.summary,
+        processed.summaryZh,
         processed.enhancedContent,
         processed.language,
         processed.readingTime,
         'complete',
         now,
+        body.hn_score || null,
+        body.hn_comments || null,
         id
       ).run();
     } else {
@@ -350,9 +406,9 @@ async function handlePost(request: Request, env: Env): Promise<Response> {
       await env.DB.prepare(`
         INSERT INTO articles (
           id, source_type, source_url, email_message_id,
-          raw_content, ai_summary, ai_enhanced_content,
-          title, author, language, reading_time, status, created_at, processed_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          raw_content, ai_summary, ai_summary_zh, ai_enhanced_content,
+          title, author, language, reading_time, status, created_at, processed_at, hn_score, hn_comments
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).bind(
         id,
         body.source_type,
@@ -360,6 +416,7 @@ async function handlePost(request: Request, env: Env): Promise<Response> {
         body.email_message_id || null,
         body.raw_content,
         processed.summary,
+        processed.summaryZh,
         processed.enhancedContent,
         processed.title,
         processed.author,
@@ -367,7 +424,9 @@ async function handlePost(request: Request, env: Env): Promise<Response> {
         processed.readingTime,
         'complete',
         now,
-        now
+        now,
+        body.hn_score || null,
+        body.hn_comments || null
       ).run();
     }
 

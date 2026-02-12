@@ -9,7 +9,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-noto-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
 .dark {
@@ -20,7 +20,8 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-noto-sans), ui-sans-serif, system-ui, sans-serif;
+  font-size: 18px;
 }
 
 /* Chinese typography */
@@ -59,4 +60,37 @@ html {
 :focus-visible {
   outline: 2px solid rgb(59 130 246);
   outline-offset: 2px;
+}
+
+/* Semantic highlighting for enhanced content */
+/* Dynamic color palette based on article ID */
+
+/* Core concepts and key ideas */
+.highlight-concept {
+  color: var(--color-dark, #213C51);
+  font-weight: 500;
+}
+
+.dark .highlight-concept {
+  color: var(--color-dark-light, #6594B1);
+}
+
+/* Technical terms and people */
+.highlight-term {
+  color: var(--color-medium, #6594B1);
+  font-weight: 500;
+}
+
+.dark .highlight-term {
+  color: var(--color-medium-light, #89B4D1);
+}
+
+/* Statistics and emphasis */
+.highlight-stat {
+  color: var(--color-accent, #C084BC);
+  font-weight: 600;
+}
+
+.dark .highlight-stat {
+  color: var(--color-accent-light, #DDAED3);
 }
