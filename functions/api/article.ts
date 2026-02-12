@@ -46,6 +46,7 @@ interface DBArticle {
   ai_summary: string | null;
   ai_enhanced_content: string | null;
   title: string | null;
+  author: string | null;
   language: string | null;
   reading_time: number | null;
   status: string;
@@ -73,6 +74,7 @@ async function processWithAI(
   env: Env
 ): Promise<{
   title: string;
+  author: string | null;
   summary: string;
   enhancedContent: string;
   language: string;
@@ -89,28 +91,32 @@ async function processWithAI(
 
 TITLE: A clear, descriptive title${providedTitle ? ' (or improve the provided title if needed)' : ''}
 
+AUTHOR: The article author's name (if found in the content, otherwise write "Unknown")
+
 SUMMARY: One paragraph (3-5 sentences) that captures:
 - The main topic/argument
 - Key insights or findings
 - Why it matters
 
-ENHANCED CONTENT: The full article with:
-- Section headers (using ## markdown syntax) added where natural breaks occur
-- Slightly cleaned up for readability (fix obvious formatting issues)
-- Preserve the original meaning and tone
-- Keep all important details
+ENHANCED CONTENT: A condensed version (~50% length) that keeps the best parts:
+- Add section headers (## markdown) at natural topic breaks
+- Keep specific examples, interesting anecdotes, and key quotes
+- Preserve humor, personality, and the author's voice
+- Include important statistics, facts, and technical details
+- Remove redundancy, filler, and low-value content
+- Goal: readable version that captures WHY the article is interesting, not just WHAT it says
 
 ${providedTitle ? `Provided title: ${providedTitle}\n\n` : ''}Content:
 ---
 ${rawContent}
 ---
 
-Please respond in the exact format shown above with TITLE:, SUMMARY:, and ENHANCED CONTENT: labels.`;
+Please respond in the exact format shown above with TITLE:, AUTHOR:, SUMMARY:, and ENHANCED CONTENT: labels.`;
 
     // Call Claude API with Haiku for speed and cost efficiency
     const message = await anthropic.messages.create({
       model: 'claude-3-5-haiku-20241022',
-      max_tokens: 4096,
+      max_tokens: 8192,
       messages: [
         {
           role: 'user',
@@ -134,6 +140,7 @@ Please respond in the exact format shown above with TITLE:, SUMMARY:, and ENHANC
 
     return {
       title: parsed.title,
+      author: parsed.author,
       summary: parsed.summary,
       enhancedContent: parsed.enhancedContent,
       language,
@@ -152,12 +159,21 @@ Please respond in the exact format shown above with TITLE:, SUMMARY:, and ENHANC
  */
 function parseAIResponse(responseText: string): {
   title: string;
+  author: string | null;
   summary: string;
   enhancedContent: string;
 } {
   // Find TITLE section
-  const titleMatch = responseText.match(/TITLE:\s*(.+?)(?=\n\n|SUMMARY:|$)/s);
+  const titleMatch = responseText.match(/TITLE:\s*(.+?)(?=\n\n|AUTHOR:|$)/s);
   const title = titleMatch ? titleMatch[1].trim() : 'Untitled Article';
+
+  // Find AUTHOR section
+  const authorMatch = responseText.match(/AUTHOR:\s*(.+?)(?=\n\n|SUMMARY:|$)/s);
+  let author: string | null = authorMatch ? authorMatch[1].trim() : null;
+  // Normalize "Unknown" to null
+  if (author && (author.toLowerCase() === 'unknown' || author === '')) {
+    author = null;
+  }
 
   // Find SUMMARY section
   const summaryMatch = responseText.match(/SUMMARY:\s*(.+?)(?=\n\nENHANCED CONTENT:|$)/s);
@@ -173,6 +189,7 @@ function parseAIResponse(responseText: string): {
 
   return {
     title,
+    author,
     summary,
     enhancedContent,
   };
@@ -183,6 +200,7 @@ function parseAIResponse(responseText: string): {
  */
 function processWithAIFallback(rawContent: string, providedTitle?: string): {
   title: string;
+  author: string | null;
   summary: string;
   enhancedContent: string;
   language: string;
@@ -190,6 +208,9 @@ function processWithAIFallback(rawContent: string, providedTitle?: string): {
 } {
   // Extract or generate title
   const title = providedTitle || extractTitleFromContent(rawContent);
+
+  // Author not available in fallback
+  const author = null;
 
   // Generate simple summary (first 100 chars + ellipsis)
   const summaryText = rawContent.slice(0, 100).trim();
@@ -207,6 +228,7 @@ function processWithAIFallback(rawContent: string, providedTitle?: string): {
 
   return {
     title,
+    author,
     summary,
     enhancedContent,
     language,
@@ -254,6 +276,7 @@ function formatArticleResponse(article: DBArticle, baseUrl: string): ArticleResp
     created_at: article.created_at,
     url: `${baseUrl}/article?id=${article.id}`,
     source_url: article.source_url || undefined,
+    author: article.author || undefined,
   };
 }
 
@@ -308,11 +331,12 @@ async function handlePost(request: Request, env: Env): Promise<Response> {
       // Update existing record
       await env.DB.prepare(`
         UPDATE articles
-        SET title = ?, ai_summary = ?, ai_enhanced_content = ?,
+        SET title = ?, author = ?, ai_summary = ?, ai_enhanced_content = ?,
             language = ?, reading_time = ?, status = ?, processed_at = ?
         WHERE id = ?
       `).bind(
         processed.title,
+        processed.author,
         processed.summary,
         processed.enhancedContent,
         processed.language,
@@ -327,8 +351,8 @@ async function handlePost(request: Request, env: Env): Promise<Response> {
         INSERT INTO articles (
           id, source_type, source_url, email_message_id,
           raw_content, ai_summary, ai_enhanced_content,
-          title, language, reading_time, status, created_at, processed_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          title, author, language, reading_time, status, created_at, processed_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).bind(
         id,
         body.source_type,
@@ -338,6 +362,7 @@ async function handlePost(request: Request, env: Env): Promise<Response> {
         processed.summary,
         processed.enhancedContent,
         processed.title,
+        processed.author,
         processed.language,
         processed.readingTime,
         'complete',

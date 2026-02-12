@@ -14,6 +14,7 @@ interface DBArticle {
   ai_summary: string | null;
   ai_enhanced_content: string | null;
   title: string | null;
+  author: string | null;
   language: string | null;
   reading_time: number | null;
   status: string;
@@ -49,6 +50,7 @@ function formatArticleResponse(article: DBArticle, baseUrl: string): ArticleResp
     created_at: article.created_at,
     url: `${baseUrl}/article?id=${article.id}`,
     source_url: article.source_url || undefined,
+    author: article.author || undefined,
   };
 }
 
