@@ -11,21 +11,50 @@ interface ArticleContentProps {
 }
 
 /**
- * Preprocess content to convert semantic markers to HTML with color classes
+ * Preprocess content to convert semantic markers and block syntax to HTML
  *
- * Color system:
- * - ==text== (Dark Blue) - Core concepts and key ideas
- * - ^^text^^ (Medium Blue) - Technical terms, people, products
- * - $$text$$ (Soft Pink) - Statistics, numbers, emphasis
+ * Inline highlights:
+ * - ==text== (Dynamic Dark) - Core concepts → pill backgrounds
+ * - ^^text^^ (Dynamic Medium) - Technical terms → dotted underlines
+ * - $$text$$ (Dynamic Accent) - Statistics → marker highlighting
+ *
+ * Block containers:
+ * - :::callout Title\ncontent\n::: → styled callout box
+ * - :::pullquote\ncontent\n::: → styled pullquote
+ * - :::data Title\ncontent\n::: → styled data card
  */
 function preprocessContent(content: string): string {
-  return content
-    // Core concepts: ==concept== -> <span class="highlight-concept">concept</span>
+  // Process block containers first (before inline markers)
+  let processed = content
+    // Callout blocks: :::callout Title\ncontent\n:::
+    .replace(
+      /:::callout\s*(.*?)\n([\s\S]*?):::/g,
+      (_match, title: string, body: string) =>
+        `<div class="article-callout">${title.trim() ? `<div class="block-title">${title.trim()}</div>` : ''}\n\n${body.trim()}\n\n</div>`
+    )
+    // Pullquote blocks: :::pullquote\ncontent\n:::
+    .replace(
+      /:::pullquote\s*\n([\s\S]*?):::/g,
+      (_match, body: string) =>
+        `<div class="article-pullquote">\n\n${body.trim()}\n\n</div>`
+    )
+    // Data blocks: :::data Title\ncontent\n:::
+    .replace(
+      /:::data\s*(.*?)\n([\s\S]*?):::/g,
+      (_match, title: string, body: string) =>
+        `<div class="article-data-card">${title.trim() ? `<div class="block-title">${title.trim()}</div>` : ''}\n\n${body.trim()}\n\n</div>`
+    );
+
+  // Process inline highlights
+  processed = processed
+    // Core concepts: ==concept== -> pill-style highlight
     .replace(/==([^=]+)==/g, '<span class="highlight-concept">$1</span>')
-    // Technical terms & people: ^^term^^ -> <span class="highlight-term">term</span>
+    // Technical terms & people: ^^term^^ -> dotted underline
     .replace(/\^\^([^\^]+)\^\^/g, '<span class="highlight-term">$1</span>')
-    // Statistics & emphasis: $$stat$$ -> <span class="highlight-stat">stat</span>
+    // Statistics & emphasis: $$stat$$ -> marker highlight
     .replace(/\$\$([^\$]+)\$\$/g, '<span class="highlight-stat">$1</span>');
+
+  return processed;
 }
 
 export function ArticleContent({ content, isChinese, isOriginal }: ArticleContentProps) {
@@ -34,18 +63,12 @@ export function ArticleContent({ content, isChinese, isOriginal }: ArticleConten
 
   return (
     <article
-      className={`prose prose-zinc dark:prose-invert max-w-none
+      className={`article-prose prose prose-zinc dark:prose-invert max-w-none
         prose-headings:font-bold prose-headings:tracking-tight
-        prose-h1:text-3xl prose-h2:text-2xl prose-h2:text-[#213C51] dark:prose-h2:text-[#6594B1] prose-h2:pb-2 prose-h2:border-b-2 prose-h2:border-[#DDAED3]/30
-        prose-h3:text-xl
-        prose-p:leading-relaxed
-        prose-a:text-[#6594B1] dark:prose-a:text-[#89B4D1] prose-a:no-underline hover:prose-a:underline
-        prose-blockquote:border-l-4 prose-blockquote:border-[#DDAED3] prose-blockquote:bg-gradient-to-r prose-blockquote:from-[#DDAED3]/10 prose-blockquote:to-transparent dark:prose-blockquote:from-[#DDAED3]/20 dark:prose-blockquote:to-transparent prose-blockquote:py-3 prose-blockquote:px-5 prose-blockquote:rounded-r-lg prose-blockquote:not-italic
-        prose-code:bg-[#213C51]/10 dark:prose-code:bg-[#213C51]/30 prose-code:text-[#213C51] dark:prose-code:text-[#6594B1] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none
-        prose-pre:bg-[#213C51] dark:prose-pre:bg-[#213C51]/90 prose-pre:border prose-pre:border-[#6594B1]/30 prose-pre:whitespace-pre-wrap prose-pre:rounded-lg
+        prose-a:no-underline hover:prose-a:underline
+        prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none
+        prose-pre:border prose-pre:whitespace-pre-wrap prose-pre:rounded-lg
         prose-img:rounded-lg prose-img:shadow-md
-        prose-ul:my-6 prose-ol:my-6
-        prose-li:my-2
         ${isChinese ? "chinese-text" : ""}
         ${isOriginal ? "whitespace-pre-wrap" : ""}
       `}

@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import type { ArticleMetadata } from "@/types/article";
 import { formatDate, extractDomain } from "@/lib/utils";
 
@@ -7,6 +10,7 @@ interface ArticleHeaderProps {
   readingTime: number;
   hnScore?: number;
   hnComments?: number;
+  whyPicked?: string;
 }
 
 export function ArticleHeader({
@@ -15,13 +19,52 @@ export function ArticleHeader({
   readingTime,
   hnScore,
   hnComments,
+  whyPicked,
 }: ArticleHeaderProps) {
+  const [showWhyPicked, setShowWhyPicked] = useState(false);
+
   return (
-    <header className="mb-10 pb-8 -mx-6 sm:-mx-8 px-6 sm:px-8 py-8 rounded-xl bg-gradient-to-br from-[#EEEEEE]/40 to-transparent dark:from-[#213C51]/20 dark:to-transparent border-b-2 border-[#6594B1]/20">
-      {/* Title */}
-      <h1 className="text-3xl sm:text-4xl font-bold text-[#213C51] dark:text-zinc-100 leading-tight mb-4">
-        {title}
-      </h1>
+    <header
+      className="mb-10 pb-8 -mx-6 sm:-mx-8 px-6 sm:px-8 py-8 rounded-xl border-b-2 bg-gradient-to-br from-[var(--color-light,#EEEEEE)]/40 to-transparent dark:from-[var(--color-dark,#213C51)]/20 dark:to-transparent"
+      style={{ borderBottomColor: 'color-mix(in srgb, var(--color-medium, #6594B1) 20%, transparent)' }}
+    >
+      {/* Title row with why-picked icon */}
+      <div className="flex items-start gap-3 mb-4">
+        <h1 className="text-3xl sm:text-4xl font-bold leading-tight flex-1" style={{ color: 'var(--color-dark, #213C51)' }}>
+          {title}
+        </h1>
+        {whyPicked && (
+          <div className="relative flex-shrink-0 mt-1.5">
+            <button
+              onClick={() => setShowWhyPicked(!showWhyPicked)}
+              className="w-7 h-7 rounded-full flex items-center justify-center text-sm font-semibold transition-all hover:scale-110"
+              style={{
+                background: 'color-mix(in srgb, var(--color-medium, #6594B1) 15%, transparent)',
+                color: 'var(--color-medium, #6594B1)',
+                border: '1.5px solid var(--color-medium, #6594B1)',
+              }}
+              aria-label="Why this article was picked"
+            >
+              i
+            </button>
+            {showWhyPicked && (
+              <div
+                className="absolute right-0 top-10 z-50 w-72 p-4 rounded-lg shadow-lg text-sm leading-relaxed"
+                style={{
+                  background: 'var(--color-light, #f5f5f5)',
+                  border: '1px solid color-mix(in srgb, var(--color-medium, #6594B1) 30%, transparent)',
+                  color: 'var(--color-dark, #213C51)',
+                }}
+              >
+                <div className="font-semibold mb-1.5" style={{ color: 'var(--color-medium, #6594B1)' }}>
+                  Why this story
+                </div>
+                {whyPicked}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Metadata row */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-zinc-600 dark:text-zinc-400">
@@ -118,7 +161,10 @@ export function ArticleHeader({
             href={metadata.source}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1 text-zinc-600 dark:text-zinc-400 hover:text-[#6594B1] dark:hover:text-[#89B4D1] transition-colors"
+            className="flex items-center gap-1 text-zinc-600 dark:text-zinc-400 transition-colors"
+            style={{ ['--tw-text-opacity' as string]: 1 }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-medium, #6594B1)')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = '')}
           >
             <span>Source: {extractDomain(metadata.source)}</span>
             <svg

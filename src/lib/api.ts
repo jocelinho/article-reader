@@ -27,6 +27,7 @@ export interface ArticleResponse {
   author?: string;
   hn_score?: number;
   hn_comments?: number;
+  why_picked?: string;
 }
 
 export interface ApiError {
@@ -39,14 +40,14 @@ export interface ApiError {
  * Works for both local development and production
  */
 function getBaseUrl(): string {
+  // Explicit API URL takes priority (works both client and server side)
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+
   // In browser environment
   if (typeof window !== "undefined") {
     return window.location.origin;
-  }
-
-  // In server environment (SSR/SSG)
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL;
   }
 
   // Fallback for development

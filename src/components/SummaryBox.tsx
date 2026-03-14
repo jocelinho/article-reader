@@ -12,11 +12,17 @@ export function SummaryBox({ summary, summaryZh }: SummaryBoxProps) {
   if (!summary) return null;
 
   return (
-    <aside className="my-10 p-6 rounded-xl border-l-4 border-[#6594B1] bg-gradient-to-r from-[#6594B1]/10 to-transparent dark:from-[#6594B1]/20 dark:to-transparent">
+    <aside
+      className="my-10 p-6 rounded-xl border-l-4"
+      style={{
+        borderLeftColor: 'var(--color-dark, #6594B1)',
+        background: 'color-mix(in srgb, var(--color-light, #6594B1) 15%, transparent)',
+      }}
+    >
       {/* Heading with inline emoji */}
       <div className="flex items-center gap-2 mb-4">
         <span className="text-lg">✨</span>
-        <h2 className="text-base font-semibold text-[#213C51] dark:text-[#6594B1]">
+        <h2 className="text-base font-semibold" style={{ color: 'var(--color-dark, #213C51)' }}>
           Summary
         </h2>
       </div>

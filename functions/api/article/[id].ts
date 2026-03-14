@@ -23,6 +23,7 @@ interface DBArticle {
   processed_at: string | null;
   hn_score: number | null;
   hn_comments: number | null;
+  why_picked: string | null;
 }
 
 interface ArticleResponse {
@@ -39,6 +40,9 @@ interface ArticleResponse {
   url: string;
   source_url?: string;
   author?: string;
+  hn_score?: number;
+  hn_comments?: number;
+  why_picked?: string | null;
 }
 
 function formatArticleResponse(article: DBArticle, baseUrl: string): ArticleResponse {
@@ -58,6 +62,7 @@ function formatArticleResponse(article: DBArticle, baseUrl: string): ArticleResp
     author: article.author || undefined,
     hn_score: article.hn_score || undefined,
     hn_comments: article.hn_comments || undefined,
+    why_picked: article.why_picked || null,
   };
 }
 

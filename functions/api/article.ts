@@ -22,6 +22,7 @@ interface CreateArticleRequest {
   title?: string;
   hn_score?: number;
   hn_comments?: number;
+  why_picked?: string;
 }
 
 interface ArticleResponse {
@@ -40,6 +41,7 @@ interface ArticleResponse {
   author?: string;
   hn_score?: number;
   hn_comments?: number;
+  why_picked?: string;
 }
 
 interface DBArticle {
@@ -60,6 +62,7 @@ interface DBArticle {
   processed_at: string | null;
   hn_score: number | null;
   hn_comments: number | null;
+  why_picked: string | null;
 }
 
 /**
@@ -102,15 +105,20 @@ TITLE: A clear, descriptive title${providedTitle ? ' (or improve the provided ti
 
 AUTHOR: The article author's name (if found in the content, otherwise write "Unknown")
 
-SUMMARY: One paragraph (3-5 sentences) that captures:
-- The main topic/argument
-- Key insights or findings
-- Why it matters
+SUMMARY: A structured summary in this format:
+**TLDR:** One punchy sentence that captures the core message.
+
+**Key Takeaways:**
+- First key insight or finding (1-2 sentences)
+- Second key insight or finding (1-2 sentences)
+- Third key insight or finding (1-2 sentences)
+- Fourth key insight if applicable (1-2 sentences)
 
 SUMMARY_ZH: Traditional Chinese (繁體中文) translation of the SUMMARY above
-- Use natural, fluent Traditional Chinese
-- Maintain the same meaning and tone
-- Keep it concise (3-5 sentences)
+- Translate BOTH the TLDR line and all Key Takeaways bullet points
+- Use natural, fluent Traditional Chinese (繁體中文)
+- Maintain the same structure (TLDR + bullet points)
+- You MUST include SUMMARY_ZH — never skip it
 
 ENHANCED CONTENT: An improved version (~70-80% of original length) that preserves depth:
 - Add section headers (## markdown) at natural topic breaks
@@ -121,40 +129,43 @@ ENHANCED CONTENT: An improved version (~70-80% of original length) that preserve
 - Only remove: repetitive phrasing, pure filler words, tangential asides
 - Goal: readable version that captures BOTH why it's interesting AND all the important details
 
-SEMANTIC HIGHLIGHTING: Use these markers thoughtfully and sparingly (max 2-3 per paragraph):
+VISUAL CONTAINER BLOCKS (use these to break up walls of text — aim for 2-4 per article):
+- :::callout for important insights, key arguments, or "aha" moments
+- :::pullquote for memorable quotes or striking statements from the author
+- :::data for statistics clusters, comparisons, or numerical findings
 
-DARK BLUE ==text== - Core concepts and key ideas only:
-- Main topics and central themes (e.g., ==artificial intelligence==, ==climate change==)
-- Important technical concepts (e.g., ==neural networks==, ==blockchain==)
-- Framework/paradigm names (e.g., ==Mixture of Experts==)
+Format each block like this (the title after the marker is required):
+:::callout Key Insight
+Content of the callout here. Can be multiple lines.
+:::
 
-MEDIUM BLUE ^^text^^ - Technical specifics and people:
-- Specific technologies, APIs, tools (e.g., ^^GPT-5^^, ^^TensorFlow^^, ^^React^^)
-- People names (e.g., ^^Sam Altman^^, ^^Sarah Chen^^)
-- Organizations and products (e.g., ^^OpenAI^^, ^^Google^^)
+:::pullquote
+"The exact quote goes here." — Attribution
+:::
 
-SOFT PINK $$text$$ - Data points and emphasis:
-- Statistics and percentages (e.g., $$94.7%$$, $$47% improvement$$)
-- Significant numbers (e.g., $$1.8 trillion parameters$$)
-- Important quotes or critical statements
+:::data Market Statistics
+- First data point
+- Second data point
+- Third data point
+:::
 
-Rules:
-- Use sparingly - only highlight truly important terms
-- Don't highlight common words or every technical term
-- Maximum 2-3 highlights per paragraph
-- Prioritize readability over decoration
+INLINE HIGHLIGHTING (apply selectively — 3-5 highlights per paragraph):
+- Use ==text== markers for core concepts and key ideas (e.g., ==artificial intelligence==)
+- Use ^^text^^ markers for technical terms, people, products (e.g., ^^GPT-5^^, ^^Sam Altman^^)
+- Use $$text$$ markers for statistics, numbers, and critical data (e.g., $$94.7%$$, $$1.8 trillion parameters$$)
+- Do NOT include these instructions or explanations in your output
 
 ${providedTitle ? `Provided title: ${providedTitle}\n\n` : ''}Content:
 ---
 ${rawContent}
 ---
 
-Please respond in the exact format shown above with TITLE:, AUTHOR:, SUMMARY:, and ENHANCED CONTENT: labels.`;
+Please respond in the exact format shown above with TITLE:, AUTHOR:, SUMMARY:, SUMMARY_ZH:, and ENHANCED CONTENT: labels.`;
 
-    // Call Claude API with Haiku for speed and cost efficiency
+    // Call Claude API with Sonnet for quality summaries and reliable Chinese output
     const message = await anthropic.messages.create({
-      model: 'claude-3-5-haiku-20241022',
-      max_tokens: 8192,
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 12000,
       messages: [
         {
           role: 'user',
@@ -216,20 +227,36 @@ function parseAIResponse(responseText: string): {
   }
 
   // Find SUMMARY section
-  const summaryMatch = responseText.match(/SUMMARY:\s*(.+?)(?=\n\nSUMMARY_ZH:|ENHANCED CONTENT:|$)/s);
+  const summaryMatch = responseText.match(/SUMMARY:\s*(.+?)(?=\n+SUMMARY_ZH:|ENHANCED CONTENT:|$)/s);
   const summary = summaryMatch
     ? summaryMatch[1].trim()
     : 'Summary not available.';
 
   // Find SUMMARY_ZH section
-  const summaryZhMatch = responseText.match(/SUMMARY_ZH:\s*(.+?)(?=\n\nENHANCED CONTENT:|$)/s);
+  const summaryZhMatch = responseText.match(/SUMMARY_ZH:\s*(.+?)(?=\n+ENHANCED CONTENT:|$)/s);
   const summaryZh = summaryZhMatch ? summaryZhMatch[1].trim() : null;
 
   // Find ENHANCED CONTENT section
   const enhancedMatch = responseText.match(/ENHANCED CONTENT:\s*(.+)/s);
-  const enhancedContent = enhancedMatch
-    ? enhancedMatch[1].trim()
-    : responseText; // Fallback to full response if parsing fails
+  let enhancedContent: string;
+  if (enhancedMatch) {
+    enhancedContent = enhancedMatch[1].trim();
+  } else {
+    // Fallback: strip TITLE/AUTHOR/SUMMARY/SUMMARY_ZH sections and use the rest
+    // This handles cases where the AI omits the "ENHANCED CONTENT:" label
+    const firstHeading = responseText.search(/^##\s/m);
+    if (firstHeading > 0) {
+      enhancedContent = responseText.slice(firstHeading).trim();
+    } else {
+      // Last resort: strip all known section labels
+      enhancedContent = responseText
+        .replace(/^TITLE:.*?(?=\n\n|AUTHOR:)/s, '')
+        .replace(/AUTHOR:.*?(?=\n\n|SUMMARY:)/s, '')
+        .replace(/SUMMARY:.*?(?=\n+SUMMARY_ZH:|\n+ENHANCED CONTENT:|\n+##)/s, '')
+        .replace(/SUMMARY_ZH:.*?(?=\n+ENHANCED CONTENT:|\n+##)/s, '')
+        .trim();
+    }
+  }
 
   return {
     title,
@@ -330,6 +357,7 @@ function formatArticleResponse(article: DBArticle, baseUrl: string): ArticleResp
     author: article.author || undefined,
     hn_score: article.hn_score || undefined,
     hn_comments: article.hn_comments || undefined,
+    why_picked: article.why_picked || null,
   };
 }
 
@@ -385,7 +413,7 @@ async function handlePost(request: Request, env: Env): Promise<Response> {
       await env.DB.prepare(`
         UPDATE articles
         SET title = ?, author = ?, ai_summary = ?, ai_summary_zh = ?, ai_enhanced_content = ?,
-            language = ?, reading_time = ?, status = ?, processed_at = ?, hn_score = ?, hn_comments = ?
+            language = ?, reading_time = ?, status = ?, processed_at = ?, hn_score = ?, hn_comments = ?, why_picked = ?
         WHERE id = ?
       `).bind(
         processed.title,
@@ -399,6 +427,7 @@ async function handlePost(request: Request, env: Env): Promise<Response> {
         now,
         body.hn_score || null,
         body.hn_comments || null,
+        body.why_picked || null,
         id
       ).run();
     } else {
@@ -407,8 +436,8 @@ async function handlePost(request: Request, env: Env): Promise<Response> {
         INSERT INTO articles (
           id, source_type, source_url, email_message_id,
           raw_content, ai_summary, ai_summary_zh, ai_enhanced_content,
-          title, author, language, reading_time, status, created_at, processed_at, hn_score, hn_comments
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          title, author, language, reading_time, status, created_at, processed_at, hn_score, hn_comments, why_picked
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).bind(
         id,
         body.source_type,
@@ -426,7 +455,8 @@ async function handlePost(request: Request, env: Env): Promise<Response> {
         now,
         now,
         body.hn_score || null,
-        body.hn_comments || null
+        body.hn_comments || null,
+        body.why_picked || null
       ).run();
     }
 

@@ -62,35 +62,253 @@ html {
   outline-offset: 2px;
 }
 
-/* Semantic highlighting for enhanced content */
-/* Dynamic color palette based on article ID */
+/* Semantic highlighting for enhanced content — uses dynamic color palette */
 
-/* Core concepts and key ideas */
+/* Core concepts and key ideas — pill background */
 .highlight-concept {
-  color: var(--color-dark, #213C51);
-  font-weight: 500;
+  color: var(--color-dark, #1a2f42);
+  font-weight: 700;
+  background: color-mix(in srgb, var(--color-medium, #6594B1) 15%, transparent);
+  padding: 0.1em 0.45em;
+  border-radius: 0.3em;
 }
 
 .dark .highlight-concept {
-  color: var(--color-dark-light, #6594B1);
+  color: var(--color-medium-light, #7daad1);
+  background: color-mix(in srgb, var(--color-medium, #6594B1) 20%, transparent);
 }
 
-/* Technical terms and people */
+/* Technical terms and people — dotted underline */
 .highlight-term {
-  color: var(--color-medium, #6594B1);
-  font-weight: 500;
+  color: var(--color-medium, #4a7ba7);
+  font-weight: 600;
+  text-decoration: underline dotted;
+  text-decoration-color: color-mix(in srgb, var(--color-medium, #6594B1) 50%, transparent);
+  text-underline-offset: 3px;
 }
 
 .dark .highlight-term {
-  color: var(--color-medium-light, #89B4D1);
+  color: var(--color-medium-light, #a3c9e3);
+  text-decoration-color: color-mix(in srgb, var(--color-medium-light, #a3c9e3) 40%, transparent);
 }
 
-/* Statistics and emphasis */
+/* Statistics and emphasis — marker-style highlighting */
 .highlight-stat {
-  color: var(--color-accent, #C084BC);
-  font-weight: 600;
+  color: var(--color-accent, #b56ba7);
+  font-weight: 700;
+  background: linear-gradient(to top, color-mix(in srgb, var(--color-accent, #DDAED3) 25%, transparent) 40%, transparent 40%);
 }
 
 .dark .highlight-stat {
-  color: var(--color-accent-light, #DDAED3);
+  color: var(--color-accent-light, #e8bed9);
+  background: linear-gradient(to top, color-mix(in srgb, var(--color-accent, #DDAED3) 20%, transparent) 40%, transparent 40%);
+}
+
+/* Visual container blocks */
+.article-callout {
+  margin: 1.75rem 0;
+  padding: 1.25rem 1.5rem;
+  border-left: 4px solid var(--color-medium, #6594B1);
+  background: color-mix(in srgb, var(--color-medium, #6594B1) 8%, transparent);
+  border-radius: 0 0.75rem 0.75rem 0;
+}
+
+.article-callout .block-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--color-dark, #213C51);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.dark .article-callout {
+  background: color-mix(in srgb, var(--color-medium, #6594B1) 12%, transparent);
+}
+
+.dark .article-callout .block-title {
+  color: var(--color-medium-light, #89B4D1);
+}
+
+.article-pullquote {
+  margin: 2rem 0;
+  padding: 1.5rem 2rem;
+  border-left: 4px solid var(--color-accent, #DDAED3);
+  background: color-mix(in srgb, var(--color-accent, #DDAED3) 8%, transparent);
+  border-radius: 0 0.75rem 0.75rem 0;
+  font-style: italic;
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: var(--color-dark, #213C51);
+}
+
+.dark .article-pullquote {
+  background: color-mix(in srgb, var(--color-accent, #DDAED3) 12%, transparent);
+  color: var(--color-accent-light, #e8bed9);
+}
+
+.article-data-card {
+  margin: 1.75rem 0;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid color-mix(in srgb, var(--color-dark, #213C51) 20%, transparent);
+  border-left: 4px solid var(--color-dark, #213C51);
+  background: color-mix(in srgb, var(--color-light, #EEEEEE) 30%, transparent);
+  border-radius: 0 0.75rem 0.75rem 0;
+}
+
+.article-data-card .block-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--color-dark, #213C51);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.dark .article-data-card {
+  border-color: color-mix(in srgb, var(--color-medium, #6594B1) 30%, transparent);
+  background: color-mix(in srgb, var(--color-dark, #213C51) 15%, transparent);
+}
+
+.dark .article-data-card .block-title {
+  color: var(--color-medium-light, #89B4D1);
+}
+
+/* ============================================
+   Article prose — typography, spacing, hierarchy
+   Uses !important to override Tailwind prose defaults
+   ============================================ */
+
+/* Base paragraph spacing — generous breathing room */
+.article-prose p {
+  margin-top: 1.5em !important;
+  margin-bottom: 1.5em !important;
+  line-height: 1.85 !important;
+  font-size: 1.05rem !important;
+}
+
+/* First paragraph after heading — no extra top margin */
+.article-prose h2 + p,
+.article-prose h3 + p {
+  margin-top: 0.75em !important;
+}
+
+/* Section headings — prominent with clear separation */
+.article-prose h2 {
+  color: var(--color-dark, #213C51) !important;
+  padding-bottom: 0.6rem !important;
+  margin-top: 3rem !important;
+  margin-bottom: 1.25rem !important;
+  border-bottom: 2px solid color-mix(in srgb, var(--color-accent, #DDAED3) 40%, transparent) !important;
+  font-size: 1.5rem !important;
+  letter-spacing: -0.01em !important;
+}
+
+.article-prose h3 {
+  color: var(--color-dark, #213C51) !important;
+  margin-top: 2.25rem !important;
+  margin-bottom: 0.75rem !important;
+  font-size: 1.25rem !important;
+  opacity: 0.9;
+}
+
+.dark .article-prose h2 {
+  color: var(--color-medium, #6594B1) !important;
+}
+
+.dark .article-prose h3 {
+  color: var(--color-medium-light, #89B4D1) !important;
+}
+
+/* Links */
+.article-prose a {
+  color: var(--color-medium, #6594B1) !important;
+}
+
+.dark .article-prose a {
+  color: var(--color-medium-light, #89B4D1) !important;
+}
+
+/* Blockquotes — visual break from body text */
+.article-prose blockquote {
+  border-left-color: var(--color-accent, #DDAED3) !important;
+  margin-top: 2rem !important;
+  margin-bottom: 2rem !important;
+  padding: 1rem 1.5rem !important;
+  background: color-mix(in srgb, var(--color-accent, #DDAED3) 6%, transparent) !important;
+  border-radius: 0 0.5rem 0.5rem 0 !important;
+}
+
+.dark .article-prose blockquote {
+  background: color-mix(in srgb, var(--color-accent, #DDAED3) 10%, transparent) !important;
+}
+
+.article-prose blockquote p {
+  margin-top: 0.5em !important;
+  margin-bottom: 0.5em !important;
+}
+
+/* Lists — clear spacing between items */
+.article-prose ul,
+.article-prose ol {
+  margin-top: 1.5em !important;
+  margin-bottom: 1.5em !important;
+  padding-left: 1.5em !important;
+}
+
+.article-prose li {
+  margin-top: 0.6em !important;
+  margin-bottom: 0.6em !important;
+  line-height: 1.75 !important;
+}
+
+.article-prose li p {
+  margin-top: 0.25em !important;
+  margin-bottom: 0.25em !important;
+}
+
+/* Inline code */
+.article-prose code:not(pre code) {
+  background: color-mix(in srgb, var(--color-dark, #213C51) 10%, transparent) !important;
+  color: var(--color-dark, #213C51) !important;
+}
+
+.dark .article-prose code:not(pre code) {
+  background: color-mix(in srgb, var(--color-dark, #213C51) 30%, transparent) !important;
+  color: var(--color-medium, #6594B1) !important;
+}
+
+/* Code blocks */
+.article-prose pre {
+  background: var(--color-dark, #213C51) !important;
+  border-color: color-mix(in srgb, var(--color-medium, #6594B1) 30%, transparent) !important;
+  margin-top: 2rem !important;
+  margin-bottom: 2rem !important;
+}
+
+.dark .article-prose pre {
+  background: color-mix(in srgb, var(--color-dark, #213C51) 90%, transparent) !important;
+}
+
+/* Horizontal rules — section dividers */
+.article-prose hr {
+  margin-top: 3rem !important;
+  margin-bottom: 3rem !important;
+  border-color: color-mix(in srgb, var(--color-medium, #6594B1) 20%, transparent) !important;
+}
+
+/* Images — breathing room */
+.article-prose img {
+  margin-top: 2rem !important;
+  margin-bottom: 2rem !important;
+}
+
+/* Strong text — use dynamic color for emphasis */
+.article-prose strong {
+  color: var(--color-dark, #1a2f42) !important;
+  font-weight: 700 !important;
+}
+
+.dark .article-prose strong {
+  color: var(--color-medium-light, #c5dae8) !important;
 }

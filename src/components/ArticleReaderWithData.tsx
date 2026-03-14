@@ -101,6 +101,7 @@ export function ArticleReaderWithData({ article }: ArticleReaderWithDataProps) {
             readingTime={article.reading_time}
             hnScore={article.hn_score}
             hnComments={article.hn_comments}
+            whyPicked={article.why_picked}
           />
           {article.ai_summary && <SummaryBox summary={article.ai_summary} summaryZh={article.ai_summary_zh} />}
           <ArticleContent
