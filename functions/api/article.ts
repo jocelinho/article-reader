@@ -23,6 +23,12 @@ interface CreateArticleRequest {
   hn_score?: number;
   hn_comments?: number;
   why_picked?: string;
+  // HN digest selection dimension (all optional; only sent by hn-ai-digest)
+  hn_id?: number;
+  hn_url?: string;
+  digest_date?: string;   // YYYY-MM-DD
+  digest_rank?: number;
+  excitement_score?: number;
 }
 
 interface ArticleResponse {
@@ -63,6 +69,11 @@ interface DBArticle {
   hn_score: number | null;
   hn_comments: number | null;
   why_picked: string | null;
+  hn_id: number | null;
+  hn_url: string | null;
+  digest_date: string | null;
+  digest_rank: number | null;
+  excitement_score: number | null;
 }
 
 /**
@@ -394,6 +405,22 @@ async function handlePost(request: Request, env: Env): Promise<Response> {
     ).bind(id).first<DBArticle>();
 
     if (existing && existing.status === 'complete') {
+      // Already processed. Backfill HN digest fields if this pick brought them
+      // and they weren't recorded yet (e.g. article first arrived via email).
+      if (body.digest_date && !existing.digest_date) {
+        await env.DB.prepare(`
+          UPDATE articles
+          SET hn_id = ?, hn_url = ?, digest_date = ?, digest_rank = ?, excitement_score = ?
+          WHERE id = ?
+        `).bind(
+          body.hn_id ?? null,
+          body.hn_url ?? null,
+          body.digest_date,
+          body.digest_rank ?? null,
+          body.excitement_score ?? null,
+          id
+        ).run();
+      }
       // Return cached result
       const baseUrl = new URL(request.url).origin;
       return new Response(
@@ -413,7 +440,8 @@ async function handlePost(request: Request, env: Env): Promise<Response> {
       await env.DB.prepare(`
         UPDATE articles
         SET title = ?, author = ?, ai_summary = ?, ai_summary_zh = ?, ai_enhanced_content = ?,
-            language = ?, reading_time = ?, status = ?, processed_at = ?, hn_score = ?, hn_comments = ?, why_picked = ?
+            language = ?, reading_time = ?, status = ?, processed_at = ?, hn_score = ?, hn_comments = ?, why_picked = ?,
+            hn_id = ?, hn_url = ?, digest_date = ?, digest_rank = ?, excitement_score = ?
         WHERE id = ?
       `).bind(
         processed.title,
@@ -428,6 +456,11 @@ async function handlePost(request: Request, env: Env): Promise<Response> {
         body.hn_score || null,
         body.hn_comments || null,
         body.why_picked || null,
+        body.hn_id ?? null,
+        body.hn_url ?? null,
+        body.digest_date ?? null,
+        body.digest_rank ?? null,
+        body.excitement_score ?? null,
         id
       ).run();
     } else {
@@ -436,8 +469,9 @@ async function handlePost(request: Request, env: Env): Promise<Response> {
         INSERT INTO articles (
           id, source_type, source_url, email_message_id,
           raw_content, ai_summary, ai_summary_zh, ai_enhanced_content,
-          title, author, language, reading_time, status, created_at, processed_at, hn_score, hn_comments, why_picked
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          title, author, language, reading_time, status, created_at, processed_at, hn_score, hn_comments, why_picked,
+          hn_id, hn_url, digest_date, digest_rank, excitement_score
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).bind(
         id,
         body.source_type,
@@ -456,7 +490,12 @@ async function handlePost(request: Request, env: Env): Promise<Response> {
         now,
         body.hn_score || null,
         body.hn_comments || null,
-        body.why_picked || null
+        body.why_picked || null,
+        body.hn_id ?? null,
+        body.hn_url ?? null,
+        body.digest_date ?? null,
+        body.digest_rank ?? null,
+        body.excitement_score ?? null
       ).run();
     }
 
