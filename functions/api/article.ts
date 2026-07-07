@@ -174,8 +174,9 @@ ${rawContent}
 Please respond in the exact format shown above with TITLE:, AUTHOR:, SUMMARY:, SUMMARY_ZH:, and ENHANCED CONTENT: labels.`;
 
     // Call Claude API with Sonnet for quality summaries and reliable Chinese output
+    // (claude-sonnet-4-6 is the current Sonnet; sonnet-4-20250514 retired 2026-06-15)
     const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 12000,
       messages: [
         {
