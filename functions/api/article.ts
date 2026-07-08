@@ -23,12 +23,13 @@ interface CreateArticleRequest {
   hn_score?: number;
   hn_comments?: number;
   why_picked?: string;
-  // HN digest selection dimension (all optional; only sent by hn-ai-digest)
+  // Digest selection dimension (all optional; only sent by hn-ai-digest)
   hn_id?: number;
   hn_url?: string;
   digest_date?: string;   // YYYY-MM-DD
   digest_rank?: number;
   excitement_score?: number;
+  digest_source?: string; // 'hn' | 'openai' | 'techcrunch' | 'theverge' | 'arstechnica' | 'every.to'
 }
 
 interface ArticleResponse {
@@ -74,6 +75,7 @@ interface DBArticle {
   digest_date: string | null;
   digest_rank: number | null;
   excitement_score: number | null;
+  digest_source: string | null;
 }
 
 /**
@@ -411,7 +413,7 @@ async function handlePost(request: Request, env: Env): Promise<Response> {
       if (body.digest_date && !existing.digest_date) {
         await env.DB.prepare(`
           UPDATE articles
-          SET hn_id = ?, hn_url = ?, digest_date = ?, digest_rank = ?, excitement_score = ?
+          SET hn_id = ?, hn_url = ?, digest_date = ?, digest_rank = ?, excitement_score = ?, digest_source = ?
           WHERE id = ?
         `).bind(
           body.hn_id ?? null,
@@ -419,6 +421,7 @@ async function handlePost(request: Request, env: Env): Promise<Response> {
           body.digest_date,
           body.digest_rank ?? null,
           body.excitement_score ?? null,
+          body.digest_source ?? null,
           id
         ).run();
       }
@@ -442,7 +445,7 @@ async function handlePost(request: Request, env: Env): Promise<Response> {
         UPDATE articles
         SET title = ?, author = ?, ai_summary = ?, ai_summary_zh = ?, ai_enhanced_content = ?,
             language = ?, reading_time = ?, status = ?, processed_at = ?, hn_score = ?, hn_comments = ?, why_picked = ?,
-            hn_id = ?, hn_url = ?, digest_date = ?, digest_rank = ?, excitement_score = ?
+            hn_id = ?, hn_url = ?, digest_date = ?, digest_rank = ?, excitement_score = ?, digest_source = ?
         WHERE id = ?
       `).bind(
         processed.title,
@@ -462,6 +465,7 @@ async function handlePost(request: Request, env: Env): Promise<Response> {
         body.digest_date ?? null,
         body.digest_rank ?? null,
         body.excitement_score ?? null,
+        body.digest_source ?? null,
         id
       ).run();
     } else {
@@ -471,8 +475,8 @@ async function handlePost(request: Request, env: Env): Promise<Response> {
           id, source_type, source_url, email_message_id,
           raw_content, ai_summary, ai_summary_zh, ai_enhanced_content,
           title, author, language, reading_time, status, created_at, processed_at, hn_score, hn_comments, why_picked,
-          hn_id, hn_url, digest_date, digest_rank, excitement_score
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          hn_id, hn_url, digest_date, digest_rank, excitement_score, digest_source
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).bind(
         id,
         body.source_type,
@@ -496,7 +500,8 @@ async function handlePost(request: Request, env: Env): Promise<Response> {
         body.hn_url ?? null,
         body.digest_date ?? null,
         body.digest_rank ?? null,
-        body.excitement_score ?? null
+        body.excitement_score ?? null,
+        body.digest_source ?? null
       ).run();
     }
 

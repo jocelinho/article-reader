@@ -21,6 +21,8 @@ interface DigestRow {
   digest_date: string;
   digest_rank: number | null;
   excitement_score: number | null;
+  digest_source: string | null;
+  source_url: string | null;
   id: string;
   title: string | null;
   ai_summary: string | null;
@@ -54,7 +56,7 @@ async function handleGet(request: Request, env: Env): Promise<Response> {
 
   const op = date ? '=' : '>=';
   const rows = await env.DB.prepare(`
-    SELECT hn_id, hn_url, digest_date, digest_rank, excitement_score,
+    SELECT hn_id, hn_url, digest_date, digest_rank, excitement_score, digest_source, source_url,
            id, title, ai_summary, ai_summary_zh, reading_time,
            hn_score AS score_hn, hn_comments AS comments_hn
     FROM articles
@@ -69,6 +71,8 @@ async function handleGet(request: Request, env: Env): Promise<Response> {
     digest_date: r.digest_date,
     rank: r.digest_rank,
     excitement_score: r.excitement_score,
+    digest_source: r.digest_source ?? undefined,
+    source_url: r.source_url ?? undefined,
     title: r.title,
     ai_summary: r.ai_summary,
     ai_summary_zh: r.ai_summary_zh ?? undefined,
