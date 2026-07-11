@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "deploy": "npm run build && wrangler pages deploy out --project-name=article-reader",
+    "deploy": "npm run build && wrangler deploy",
     "wrangler:dev": "wrangler dev",
     "wrangler:deploy": "wrangler deploy",
     "db:create": "wrangler d1 create article-reader-db",

@@ -48,7 +48,7 @@ interface ArticleResponse {
   author?: string;
   hn_score?: number;
   hn_comments?: number;
-  why_picked?: string;
+  why_picked?: string | null;
 }
 
 interface DBArticle {

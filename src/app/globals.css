@@ -2,7 +2,8 @@
 @plugin "@tailwindcss/typography";
 
 :root {
-  --background: #ffffff;
+  /* Warm paper background shared with the homepage (homepage.ts --paper) */
+  --background: #f7f6f0;
   --foreground: #18181b;
 }
 

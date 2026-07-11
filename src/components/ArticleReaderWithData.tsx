@@ -69,7 +69,7 @@ export function ArticleReaderWithData({ article }: ArticleReaderWithDataProps) {
     <>
       <ReadingProgress />
       <div
-        className="min-h-screen bg-white dark:bg-zinc-950"
+        className="min-h-screen bg-[#f7f6f0] dark:bg-zinc-950"
         style={{
           // Apply dynamic color palette as CSS variables
           ['--color-dark' as string]: colorPalette.dark,

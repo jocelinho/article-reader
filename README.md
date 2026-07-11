@@ -16,7 +16,7 @@ AI-powered article enhancement and reading platform. Submit raw article content 
 ## Tech Stack
 
 - **Next.js 15** (static export) + **React 19**
-- **Cloudflare Pages + D1** (edge SQLite database)
+- **Cloudflare Workers + Static Assets + D1** (edge SQLite database)
 - **Claude API** (Sonnet) for AI processing
 - **Tailwind CSS 4** with `@tailwindcss/typography`
 - **TypeScript** throughout
@@ -142,7 +142,7 @@ article-reader/
 ## Deployment
 
 ```bash
-# Build and deploy to Cloudflare Pages
+# Build and deploy the independent Cloudflare Worker
 npm run deploy
 
 # Apply D1 migrations to production

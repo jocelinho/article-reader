@@ -51,7 +51,7 @@ Whether you're reading news, literature, or technical documentation, the medium 
         }),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as { id: string; url: string };
       setTestResult({ id: data.id, url: data.url });
     } catch (error) {
       console.error("Failed to create test article:", error);
@@ -61,7 +61,7 @@ Whether you're reading news, literature, or technical documentation, the medium 
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-zinc-950">
+    <div className="min-h-screen bg-[#f7f6f0] dark:bg-zinc-950">
       <div className="fixed top-4 right-4 z-40">
         <ThemeToggle />
       </div>
