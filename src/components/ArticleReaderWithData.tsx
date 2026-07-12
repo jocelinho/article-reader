@@ -103,7 +103,7 @@ export function ArticleReaderWithData({ article }: ArticleReaderWithDataProps) {
             hnComments={article.hn_comments}
             whyPicked={article.why_picked}
           />
-          {article.ai_summary && <SummaryBox summary={article.ai_summary} summaryZh={article.ai_summary_zh} />}
+          {(article.ai_summary || article.ai_summary_zh) && <SummaryBox summary={article.ai_summary ?? ""} summaryZh={article.ai_summary_zh} />}
           <ArticleContent
             content={displayContent}
             isChinese={isChinese}

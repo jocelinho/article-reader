@@ -8,8 +8,13 @@ interface SummaryBoxProps {
   summaryZh?: string;
 }
 
+// Jocelin reads the Chinese summary — when it exists it IS the summary, shown
+// first and full-size; the English original is demoted to a collapsed details.
 export function SummaryBox({ summary, summaryZh }: SummaryBoxProps) {
-  if (!summary) return null;
+  if (!summary && !summaryZh) return null;
+
+  const proseClass =
+    "prose prose-zinc dark:prose-invert max-w-none prose-p:leading-[1.9] prose-p:text-zinc-700 dark:prose-p:text-zinc-300 prose-p:text-base prose-p:my-3";
 
   return (
     <aside
@@ -23,27 +28,25 @@ export function SummaryBox({ summary, summaryZh }: SummaryBoxProps) {
       <div className="flex items-center gap-2 mb-4">
         <span className="text-lg">✨</span>
         <h2 className="text-base font-semibold" style={{ color: 'var(--color-dark, #213C51)' }}>
-          Summary
+          {summaryZh ? "摘要" : "Summary"}
         </h2>
       </div>
 
-      {/* English summary */}
-      <div className="prose prose-zinc dark:prose-invert max-w-none prose-p:leading-[1.9] prose-p:text-zinc-700 dark:prose-p:text-zinc-300 prose-p:text-base prose-p:my-3">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{summary}</ReactMarkdown>
+      {/* Primary summary: Chinese when available, else English */}
+      <div className={`${proseClass}${summaryZh ? " lang-zh" : ""}`}>
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{summaryZh || summary}</ReactMarkdown>
       </div>
 
-      {/* Chinese summary if available */}
-      {summaryZh && (
-        <div className="mt-6 pt-6 border-t border-zinc-200/50 dark:border-zinc-700/50">
-          <div className="flex items-center gap-2 mb-3">
-            <h3 className="text-sm font-semibold text-zinc-600 dark:text-zinc-400">
-              摘要 (繁體中文)
-            </h3>
+      {/* English original tucked away when Chinese is primary */}
+      {summaryZh && summary && (
+        <details className="mt-6 pt-4 border-t border-zinc-200/50 dark:border-zinc-700/50">
+          <summary className="text-sm font-semibold text-zinc-600 dark:text-zinc-400 cursor-pointer select-none">
+            English summary
+          </summary>
+          <div className={`${proseClass} mt-3`}>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{summary}</ReactMarkdown>
           </div>
-          <div className="prose prose-zinc dark:prose-invert max-w-none prose-p:leading-[1.9] prose-p:text-zinc-700 dark:prose-p:text-zinc-300 prose-p:text-base prose-p:my-3 lang-zh">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{summaryZh}</ReactMarkdown>
-          </div>
-        </div>
+        </details>
       )}
     </aside>
   );
