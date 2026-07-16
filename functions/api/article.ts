@@ -30,6 +30,9 @@ interface CreateArticleRequest {
   digest_rank?: number;
   excitement_score?: number;
   digest_source?: string; // 'hn' | 'openai' | 'techcrunch' | 'theverge' | 'arstechnica' | 'every.to'
+  // When the source is a PDF, senders set this instead of scraping (binary can't
+  // be read as HTML). Claude reads the PDF directly via a URL document block.
+  pdf_url?: string;
 }
 
 interface ArticleResponse {
@@ -95,7 +98,8 @@ async function hashContent(content: string): Promise<string> {
 async function processWithAI(
   rawContent: string,
   providedTitle: string | undefined,
-  env: Env
+  env: Env,
+  pdfUrl?: string
 ): Promise<{
   title: string;
   author: string | null;
@@ -168,12 +172,21 @@ INLINE HIGHLIGHTING (apply selectively — 3-5 highlights per paragraph):
 - Use $$text$$ markers for statistics, numbers, and critical data (e.g., $$94.7%$$, $$1.8 trillion parameters$$)
 - Do NOT include these instructions or explanations in your output
 
-${providedTitle ? `Provided title: ${providedTitle}\n\n` : ''}Content:
+${providedTitle ? `Provided title: ${providedTitle}\n\n` : ''}${pdfUrl ? 'Content: the attached PDF document.' : `Content:
 ---
 ${rawContent}
----
+---`}
 
 Please respond in the exact format shown above with TITLE:, AUTHOR:, SUMMARY:, SUMMARY_ZH:, and ENHANCED CONTENT: labels.`;
+
+    // PDF sources are attached as a URL document block — Anthropic fetches and
+    // parses the PDF itself, so no PDF library is needed in the Worker.
+    const content: Anthropic.ContentBlockParam[] | string = pdfUrl
+      ? [
+          { type: 'document', source: { type: 'url', url: pdfUrl } },
+          { type: 'text', text: prompt },
+        ]
+      : prompt;
 
     // Call Claude API with Sonnet for quality summaries and reliable Chinese output
     // (claude-sonnet-4-6 is the current Sonnet; sonnet-4-20250514 retired 2026-06-15)
@@ -183,7 +196,7 @@ Please respond in the exact format shown above with TITLE:, AUTHOR:, SUMMARY:, S
       messages: [
         {
           role: 'user',
-          content: prompt,
+          content,
         },
       ],
     });
@@ -194,8 +207,9 @@ Please respond in the exact format shown above with TITLE:, AUTHOR:, SUMMARY:, S
     // Parse the structured response
     const parsed = parseAIResponse(responseText);
 
-    // Detect language
-    const language = detectLanguage(rawContent);
+    // Detect language (for PDFs the raw content is binary/placeholder, so use
+    // the AI-extracted text instead)
+    const language = detectLanguage(pdfUrl ? parsed.enhancedContent : rawContent);
 
     // Estimate reading time from enhanced content
     const wordCount = parsed.enhancedContent.split(/\s+/).length;
@@ -433,8 +447,11 @@ async function handlePost(request: Request, env: Env): Promise<Response> {
       );
     }
 
-    // Process with AI
-    const processed = await processWithAI(body.raw_content, body.title, env);
+    // Process with AI. Safety net: if raw_content is PDF binary that slipped
+    // through an HTML scraper, read the PDF from source_url instead.
+    const pdfUrl = body.pdf_url
+      || (body.raw_content.trimStart().startsWith('%PDF-') ? body.source_url : undefined);
+    const processed = await processWithAI(body.raw_content, body.title, env, pdfUrl);
 
     // Store in database
     const now = new Date().toISOString();
