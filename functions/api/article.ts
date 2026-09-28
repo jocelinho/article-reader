@@ -134,7 +134,9 @@ SUMMARY: A structured summary in this format:
 SUMMARY_ZH: Traditional Chinese (繁體中文) translation of the SUMMARY above
 - Translate BOTH the TLDR line and all Key Takeaways bullet points
 - Use natural, fluent Traditional Chinese (繁體中文)
-- Use exactly these headings: **TLDR：** and **重點摘要：** (full-width punctuation throughout)
+- Use exactly these headings: **TLDR：** and **重點摘要：**
+- Use full-width Chinese punctuation (，：。、) everywhere, never half-width , or :
+- Plain text only: no ==, ^^ or $$ highlight markers in SUMMARY or SUMMARY_ZH
 - You MUST include SUMMARY_ZH — never skip it
 
 ENHANCED CONTENT: An improved version (~70-80% of the article body's length, ignoring navigation/boilerplate) that preserves depth. This is a light edit of the full article, not a summary — do not condense it:
@@ -146,7 +148,7 @@ ENHANCED CONTENT: An improved version (~70-80% of the article body's length, ign
 - Only remove: repetitive phrasing, pure filler words, tangential asides
 - Goal: readable version that captures BOTH why it's interesting AND all the important details
 
-VISUAL CONTAINER BLOCKS (use these to break up walls of text — aim for 2-4 per article):
+VISUAL CONTAINER BLOCKS (ENHANCED CONTENT only — use these to break up walls of text, aim for 2-4 per article):
 - :::callout for important insights, key arguments, or "aha" moments
 - :::pullquote for memorable quotes or striking statements from the author
 - :::data for statistics clusters, comparisons, or numerical findings
@@ -166,7 +168,7 @@ Content of the callout here. Can be multiple lines.
 - Third data point
 :::
 
-INLINE HIGHLIGHTING (apply selectively — 3-5 highlights per paragraph):
+INLINE HIGHLIGHTING (ENHANCED CONTENT only — apply selectively, 3-5 highlights per paragraph):
 - Use ==text== markers for core concepts and key ideas (e.g., ==artificial intelligence==)
 - Use ^^text^^ markers for technical terms, people, products (e.g., ^^GPT-5^^, ^^Sam Altman^^)
 - Use $$text$$ markers for statistics, numbers, and critical data (e.g., $$94.7%$$, $$1.8 trillion parameters$$)
