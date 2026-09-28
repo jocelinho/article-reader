@@ -134,10 +134,10 @@ SUMMARY: A structured summary in this format:
 SUMMARY_ZH: Traditional Chinese (繁體中文) translation of the SUMMARY above
 - Translate BOTH the TLDR line and all Key Takeaways bullet points
 - Use natural, fluent Traditional Chinese (繁體中文)
-- Maintain the same structure (TLDR + bullet points)
+- Use exactly these headings: **TLDR：** and **重點摘要：** (full-width punctuation throughout)
 - You MUST include SUMMARY_ZH — never skip it
 
-ENHANCED CONTENT: An improved version (~70-80% of original length) that preserves depth:
+ENHANCED CONTENT: An improved version (~70-80% of the article body's length, ignoring navigation/boilerplate) that preserves depth. This is a light edit of the full article, not a summary — do not condense it:
 - Add section headers (## markdown) at natural topic breaks
 - Keep ALL specific examples, data points, quotes, and technical details
 - Preserve humor, personality, and the author's voice completely
@@ -189,10 +189,15 @@ Please respond in the exact format shown above with TITLE:, AUTHOR:, SUMMARY:, S
       : prompt;
 
     // Call Claude API with Sonnet for quality summaries and reliable Chinese output
-    // (claude-sonnet-4-6 is the current Sonnet; sonnet-4-20250514 retired 2026-06-15)
+    // (claude-sonnet-5 replaced sonnet-4-6 on 2026-09-28). Sonnet 5 runs adaptive
+    // thinking by default; effort "medium" keeps summaries at ~4.6-high quality
+    // without deep reasoning. max_tokens has headroom for thinking + the new
+    // tokenizer (~30% more tokens than 4.6).
     const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 12000,
+      model: 'claude-sonnet-5',
+      max_tokens: 16000,
+      // SDK 0.72 has no `effort` type yet; the API accepts it.
+      output_config: { effort: 'medium' } as unknown as Anthropic.OutputConfig,
       messages: [
         {
           role: 'user',
@@ -201,8 +206,13 @@ Please respond in the exact format shown above with TITLE:, AUTHOR:, SUMMARY:, S
       ],
     });
 
-    // Extract text response
-    const responseText = message.content[0].type === 'text' ? message.content[0].text : '';
+    if (message.stop_reason === 'max_tokens') {
+      console.warn('AI response hit max_tokens; enhanced content may be truncated');
+    }
+
+    // Extract text response (content[0] is a thinking block on Sonnet 5)
+    const textBlock = message.content.find((b) => b.type === 'text');
+    const responseText = textBlock?.type === 'text' ? textBlock.text : '';
 
     // Parse the structured response
     const parsed = parseAIResponse(responseText);
