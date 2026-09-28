@@ -135,7 +135,7 @@ SUMMARY_ZH: Traditional Chinese (繁體中文) translation of the SUMMARY above
 - Translate BOTH the TLDR line and all Key Takeaways bullet points
 - Use natural, fluent Traditional Chinese (繁體中文)
 - Use exactly these headings: **TLDR：** and **重點摘要：**
-- Use full-width Chinese punctuation (，：。、) everywhere, never half-width , or :
+- Use full-width Chinese punctuation (，：。、), never half-width , or : — this applies to punctuation only; keep numbers, years and units as Arabic digits (2026年, 8,300 次, 21GB)
 - Plain text only: no ==, ^^ or $$ highlight markers in SUMMARY or SUMMARY_ZH
 - You MUST include SUMMARY_ZH — never skip it
 
@@ -230,8 +230,8 @@ Please respond in the exact format shown above with TITLE:, AUTHOR:, SUMMARY:, S
     return {
       title: parsed.title,
       author: parsed.author,
-      summary: parsed.summary,
-      summaryZh: parsed.summaryZh,
+      summary: stripHighlights(parsed.summary),
+      summaryZh: parsed.summaryZh && stripHighlights(parsed.summaryZh),
       enhancedContent: parsed.enhancedContent,
       language,
       readingTime,
@@ -247,6 +247,14 @@ Please respond in the exact format shown above with TITLE:, AUTHOR:, SUMMARY:, S
 /**
  * Parse AI response to extract structured sections
  */
+/**
+ * Remove ==/^^/$$ highlight markers. They belong to the enhanced content only,
+ * but Sonnet 5 sometimes carries them into the summaries (which Slack shows raw).
+ */
+function stripHighlights(text: string): string {
+  return text.replace(/==(.+?)==|\^\^(.+?)\^\^|\$\$(.+?)\$\$/g, (_m, a, b, c) => a ?? b ?? c);
+}
+
 function parseAIResponse(responseText: string): {
   title: string;
   author: string | null;
