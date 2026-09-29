@@ -6,6 +6,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
+import { fixSimplified } from '../../traditional';
 
 // Environment interface for D1 database binding and API keys
 export interface Env {
@@ -133,7 +134,10 @@ SUMMARY: A structured summary in this format:
 
 SUMMARY_ZH: Traditional Chinese (繁體中文) translation of the SUMMARY above
 - Translate BOTH the TLDR line and all Key Takeaways bullet points
-- Use natural, fluent Traditional Chinese (繁體中文)
+- Write the way Taiwanese tech media does: Taiwan Traditional Chinese (繁體中文) only — never a single Simplified character
+- Keep names in English: people (Cal Newport, Dario Amodei), companies, products and models
+- Keep established tech terms in English rather than forcing a translation: agent, coding agent, AI agent, LLM, token, inference, open-weight, sandbox, alignment, benchmark, API, prompt, fine-tune, GPU, startup/VC terms like ARR and seed round
+- Keep money amounts as the article writes them ($750M, $15.75B, $1B ARR) — don't convert to 億/萬; the conversion introduces errors
 - Use exactly these headings: **TLDR：** and **重點摘要：**
 - Use full-width Chinese punctuation (，：。、), never half-width , or : — this applies to punctuation only; keep numbers, years and units as Arabic digits (2026年, 8,300 次, 21GB)
 - Plain text only: no ==, ^^ or $$ highlight markers in SUMMARY or SUMMARY_ZH
@@ -231,7 +235,7 @@ Please respond in the exact format shown above with TITLE:, AUTHOR:, SUMMARY:, S
       title: parsed.title,
       author: parsed.author,
       summary: stripHighlights(parsed.summary),
-      summaryZh: parsed.summaryZh && stripHighlights(parsed.summaryZh),
+      summaryZh: parsed.summaryZh && fixSimplified(stripHighlights(parsed.summaryZh)),
       enhancedContent: parsed.enhancedContent,
       language,
       readingTime,
