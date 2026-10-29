@@ -117,7 +117,7 @@ For emails:
   "reading_time": 5,
   "status": "complete",
   "created_at": "2024-01-15T10:30:00Z",
-  "url": "https://article-reader.pages.dev/read/a1b2c3d4e5f6"
+  "url": "https://tech-news.jocelinho.com/article?id=a1b2c3d4e5f6"
 }
 ```
 
