@@ -2,6 +2,7 @@
  * Cloudflare Workers API handler for article processing
  *
  * POST /api/article - Create or retrieve article with AI processing
+ *                     (requires `Authorization: Bearer <WRITE_TOKEN>`)
  * GET /api/article/:id - Retrieve existing article by ID
  */
 
@@ -12,6 +13,10 @@ import { fixSimplified } from '../../traditional';
 export interface Env {
   DB: D1Database;
   ANTHROPIC_API_KEY: string;
+  // Shared secret for POST /api/article (set via `wrangler secret put WRITE_TOKEN`).
+  // POST spends Anthropic credit and writes to the public site, so it fails closed
+  // when unset.
+  WRITE_TOKEN?: string;
 }
 
 // Request/Response types
@@ -622,6 +627,24 @@ async function handleGet(request: Request, env: Env): Promise<Response> {
 }
 
 /**
+ * Constant-time check of `Authorization: Bearer <WRITE_TOKEN>`
+ */
+function isAuthorizedWrite(request: Request, env: Env): boolean {
+  const expected = env.WRITE_TOKEN;
+  if (!expected) return false;
+  const header = request.headers.get('Authorization') ?? '';
+  const match = /^Bearer\s+(.+)$/i.exec(header);
+  if (!match) return false;
+  const enc = new TextEncoder();
+  const a = enc.encode(match[1].trim());
+  const b = enc.encode(expected);
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i];
+  return diff === 0;
+}
+
+/**
  * Main request handler
  */
 export async function onRequest(context: { request: Request; env: Env }): Promise<Response> {
@@ -629,6 +652,12 @@ export async function onRequest(context: { request: Request; env: Env }): Promis
   const method = request.method;
 
   if (method === 'POST') {
+    if (!isAuthorizedWrite(request, env)) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
     return handlePost(request, env);
   } else if (method === 'GET') {
     return handleGet(request, env);

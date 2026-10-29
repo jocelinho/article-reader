@@ -5,3 +5,6 @@
 # Anthropic API Key for Claude AI processing
 # Get your API key from: https://console.anthropic.com/
 ANTHROPIC_API_KEY=sk-ant-api03-your-key-here
+
+# Shared secret required by POST /api/article (production: `wrangler secret put WRITE_TOKEN`)
+WRITE_TOKEN=generate-a-long-random-string
